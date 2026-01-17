@@ -1,0 +1,150 @@
+/* Custom Leaflet styling for Coffee Passport map */
+
+/* Map container */
+.coffee-map-container {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 2px solid var(--latte);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom marker styles */
+.coffee-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Popup styles */
+.leaflet-popup-content-wrapper {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--latte);
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0.75rem;
+  font-family: var(--font-handwritten), "Comic Sans MS", "Chalkboard", cursive;
+}
+
+.leaflet-popup-tip {
+  background: white;
+  border: 1px solid var(--latte);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-close-button {
+  color: var(--coffee) !important;
+  font-size: 20px !important;
+  padding: 4px 8px !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--espresso) !important;
+}
+
+/* Zoom controls */
+.leaflet-control-zoom {
+  border: 2px solid var(--latte) !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-control-zoom a {
+  background: white !important;
+  color: var(--espresso) !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--cream) !important;
+  color: var(--coffee) !important;
+}
+
+.leaflet-control-zoom-in {
+  border-bottom: 1px solid var(--latte) !important;
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+.leaflet-control-zoom-out {
+  border-radius: 0 0 0.75rem 0.75rem !important;
+}
+
+/* Attribution */
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 0.5rem 0 0 0 !important;
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+  color: var(--coffee) !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--sage) !important;
+}
+
+/* Sepia filter for map tiles */
+.leaflet-tile-pane {
+  filter: sepia(15%) saturate(90%) brightness(102%);
+}
+
+/* Touch-friendly styles for mobile */
+@media (max-width: 640px) {
+  .leaflet-popup-content-wrapper {
+    max-width: calc(100vw - 60px);
+  }
+
+  .leaflet-popup-content {
+    margin: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .leaflet-control-zoom a {
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    font-size: 20px !important;
+  }
+
+  /* Move zoom controls to top left on mobile for thumb reach */
+  .leaflet-control-zoom {
+    margin-top: 60px !important;
+  }
+
+  /* Ensure popups don't overflow */
+  .leaflet-popup {
+    max-width: 90vw !important;
+  }
+}
+
+/* Pinch zoom support - ensure map container captures touch events */
+.leaflet-container {
+  touch-action: pan-x pan-y;
+}
+
+/* Smooth animations */
+.leaflet-fade-anim .leaflet-tile,
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  will-change: transform;
+}
+
+/* Hide scrollbar in popups but keep scrolling */
+.leaflet-popup-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.leaflet-popup-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.leaflet-popup-content::-webkit-scrollbar-thumb {
+  background: var(--latte);
+  border-radius: 2px;
+}

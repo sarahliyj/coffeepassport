@@ -18,6 +18,23 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Supabase Setup
+
+### Database Setup
+1. Run the SQL in `supabase-setup.sql` in your Supabase SQL Editor
+2. If you already have the profiles table, run `supabase-migration-add-profile-picture.sql` to add the profile_picture_url column
+
+### Storage Setup
+To enable profile picture uploads, create a storage bucket in Supabase:
+
+1. Go to Supabase Dashboard > Storage
+2. Create a new bucket named `avatars`
+3. Set it to **Public** (so profile pictures can be accessed)
+4. Set file size limit to **5MB**
+5. Add allowed MIME types: `image/*`
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
