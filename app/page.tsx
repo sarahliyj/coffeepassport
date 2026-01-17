@@ -124,11 +124,13 @@ function HomeContent() {
   const [coffeeEntries, setCoffeeEntries] = useState<CoffeeEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [highlightCountry, setHighlightCountry] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const searchParams = useSearchParams()
   const supabase = createClient()
 
   const fetchEntries = async () => {
     const { data: { user } } = await supabase.auth.getUser()
+    setIsAuthenticated(!!user)
     if (!user) {
       setLoading(false)
       return
@@ -340,15 +342,34 @@ function HomeContent() {
                 Start Your Journey
               </h2>
               <p className="text-[var(--coffee)] mb-5 max-w-xs mx-auto">
-                Log your first coffee to see your passport come alive with origins from around the world!
+                {isAuthenticated
+                  ? "Log your first coffee to see your passport come alive with origins from around the world!"
+                  : "Sign in to start logging your coffee journey from around the world!"}
               </p>
-              <a
-                href="/add"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--espresso)] text-white rounded-xl font-semibold hover:bg-[#2A1A0D] transition shadow-md"
-              >
-                <CoffeeIcon size={20} color="white" />
-                Add Your First Coffee
-              </a>
+              {isAuthenticated ? (
+                <a
+                  href="/add"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--espresso)] text-white rounded-xl font-semibold hover:bg-[#2A1A0D] transition shadow-md"
+                >
+                  <CoffeeIcon size={20} color="white" />
+                  Add Your First Coffee
+                </a>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--espresso)] text-white rounded-xl font-semibold hover:bg-[#2A1A0D] transition shadow-md"
+                  >
+                    Sign In
+                  </a>
+                  <a
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-[var(--espresso)] rounded-xl font-semibold border border-[var(--latte)] hover:bg-[var(--cream)] transition"
+                  >
+                    Create Account
+                  </a>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

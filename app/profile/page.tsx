@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { TOTAL_COFFEE_COUNTRIES } from '@/lib/countries'
 import { motion } from 'framer-motion'
@@ -274,6 +275,65 @@ export default function ProfilePage() {
 
   if (loading) {
     return <LoadingSkeleton />
+  }
+
+  // Not authenticated - show login prompt
+  if (!stats) {
+    return (
+      <div className="min-h-screen pb-20 bg-[var(--cream)]">
+        <header className="sticky top-0 z-10 bg-[var(--cream)]/95 backdrop-blur-sm border-b border-[var(--latte)] px-4 py-4">
+          <div className="max-w-lg mx-auto flex items-center justify-center gap-3">
+            <ProfileIcon size={28} color="var(--espresso)" />
+            <h1 className="text-2xl font-bold text-[var(--espresso)]">
+              Profile
+            </h1>
+          </div>
+        </header>
+        <main className="max-w-lg mx-auto p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-lg border border-[var(--latte)] overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-[#6B5D52] to-[#8B7A69] px-5 py-8">
+              <div className="flex flex-col items-center">
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30 shadow-lg">
+                    <ProfileIcon size={48} color="white" />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+            <div className="p-6 text-center">
+              <h2 className="text-xl font-semibold text-[var(--espresso)] mb-2">
+                Welcome to Coffee Passport
+              </h2>
+              <p className="text-[var(--coffee)] mb-6">
+                Sign in to track your coffee journey, earn badges, and explore origins from around the world!
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/login"
+                  className="w-full py-3 px-6 bg-[var(--espresso)] text-white rounded-xl font-semibold hover:bg-[#2A1A0D] transition shadow-md"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="w-full py-3 px-6 bg-white text-[var(--espresso)] rounded-xl font-semibold border border-[var(--latte)] hover:bg-[var(--cream)] transition"
+                >
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </main>
+        <Navbar />
+      </div>
+    )
   }
 
   return (
