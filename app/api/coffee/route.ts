@@ -24,6 +24,31 @@ export async function POST(request: Request) {
       )
     }
 
+    // Ensure profile exists before inserting coffee entry
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      // Create profile if it doesn't exist
+      const { error: createProfileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email,
+        })
+
+      if (createProfileError) {
+        console.error('Failed to create profile:', createProfileError)
+        return NextResponse.json(
+          { error: 'Failed to create user profile' },
+          { status: 500 }
+        )
+      }
+    }
+
     const { data, error } = await supabase
       .from('coffee_entries')
       .insert({

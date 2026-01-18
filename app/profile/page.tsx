@@ -3,10 +3,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { TOTAL_COFFEE_COUNTRIES } from '@/lib/countries'
 import { motion } from 'framer-motion'
+import LoginPromptModal from '@/components/LoginPromptModal'
 import {
   CheckIcon,
   CircleIcon,
@@ -109,43 +109,49 @@ const MILESTONES: {
 
 export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const router = useRouter()
 
   const fetchStats = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return
+      }
+
+      setLoading(true)
+      const { data: entries } = await supabase
+        .from('coffee_entries')
+        .select('origin_country')
+        .eq('user_id', user.id)
+
+      // Fetch profile data including profile picture
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('profile_picture_url')
+        .eq('id', user.id)
+        .single()
+
+      const uniqueCountries = new Set(entries?.map((e: { origin_country: string }) => e.origin_country) || [])
+
+      setStats({
+        email: user.email || '',
+        totalCoffees: entries?.length || 0,
+        totalCountries: uniqueCountries.size,
+        createdAt: user.created_at,
+        profilePictureUrl: profile?.profile_picture_url || null,
+      })
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    } finally {
       setLoading(false)
-      return
     }
-
-    const { data: entries } = await supabase
-      .from('coffee_entries')
-      .select('origin_country')
-      .eq('user_id', user.id)
-
-    // Fetch profile data including profile picture
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('profile_picture_url')
-      .eq('id', user.id)
-      .single()
-
-    const uniqueCountries = new Set(entries?.map((e: { origin_country: string }) => e.origin_country) || [])
-
-    setStats({
-      email: user.email || '',
-      totalCoffees: entries?.length || 0,
-      totalCountries: uniqueCountries.size,
-      createdAt: user.created_at,
-      profilePictureUrl: profile?.profile_picture_url || null,
-    })
-    setLoading(false)
   }
 
   // Fetch on mount and when window gains focus
@@ -277,7 +283,7 @@ export default function ProfilePage() {
     return <LoadingSkeleton />
   }
 
-  // Not authenticated - show login prompt
+  // Not authenticated - show guest profile view with login modal
   if (!stats) {
     return (
       <div className="min-h-screen pb-20 bg-[var(--cream)]">
@@ -289,48 +295,96 @@ export default function ProfilePage() {
             </h1>
           </div>
         </header>
-        <main className="max-w-lg mx-auto p-4">
+        <main className="max-w-lg mx-auto p-4 space-y-6">
+          {/* Guest Profile Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl shadow-lg border border-[var(--latte)] overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-[#6B5D52] to-[#8B7A69] px-5 py-8">
+            <div className="bg-gradient-to-r from-[#6B5D52] to-[#8B7A69] px-5 py-6">
               <div className="flex flex-col items-center">
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30 shadow-lg">
-                    <ProfileIcon size={48} color="white" />
-                  </div>
-                </motion.div>
+                <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30 shadow-lg mb-3">
+                  <ProfileIcon size={48} color="white" />
+                </div>
+                <p className="text-white font-medium">Guest User</p>
+                <p className="text-sm text-white/70">Sign in to save your progress</p>
               </div>
             </div>
-            <div className="p-6 text-center">
-              <h2 className="text-xl font-semibold text-[var(--espresso)] mb-2">
-                Welcome to Coffee Passport
-              </h2>
-              <p className="text-[var(--coffee)] mb-6">
-                Sign in to track your coffee journey, earn badges, and explore origins from around the world!
-              </p>
-              <div className="flex flex-col gap-3">
-                <Link
-                  href="/login"
-                  className="w-full py-3 px-6 bg-[var(--espresso)] text-white rounded-xl font-semibold hover:bg-[#2A1A0D] transition shadow-md"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  className="w-full py-3 px-6 bg-white text-[var(--espresso)] rounded-xl font-semibold border border-[var(--latte)] hover:bg-[var(--cream)] transition"
-                >
-                  Create Account
-                </Link>
+            <div className="p-5">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[#FDFBF9] rounded-xl p-3 border border-[#E8E3DE] text-center">
+                  <div className="flex justify-center mb-1">
+                    <CoffeeIcon size={20} color="var(--coffee)" />
+                  </div>
+                  <div className="text-xl font-bold text-[var(--espresso)]">0</div>
+                  <div className="text-[10px] text-[var(--coffee)] uppercase tracking-wide">Coffees</div>
+                </div>
+                <div className="bg-[#FDFBF9] rounded-xl p-3 border border-[#E8E3DE] text-center">
+                  <div className="flex justify-center mb-1">
+                    <GlobeIcon size={20} color="var(--sage)" />
+                  </div>
+                  <div className="text-xl font-bold text-[var(--espresso)]">0</div>
+                  <div className="text-[10px] text-[var(--coffee)] uppercase tracking-wide">Origins</div>
+                </div>
+                <div className="bg-[#FDFBF9] rounded-xl p-3 border border-[#E8E3DE] text-center">
+                  <div className="flex justify-center mb-1">
+                    <TrophyIcon size={20} color="#B8860B" />
+                  </div>
+                  <div className="text-xl font-bold text-[var(--espresso)]">0</div>
+                  <div className="text-[10px] text-[var(--coffee)] uppercase tracking-wide">Badges</div>
+                </div>
               </div>
             </div>
           </motion.div>
+
+          {/* World Progress Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl shadow-lg border border-[var(--latte)] overflow-hidden"
+          >
+            <div className="p-5">
+              <SectionHeader
+                icon={<TargetIcon size={20} color="var(--coffee)" />}
+                title="World Progress"
+              />
+              <div className="bg-[#F5F2EF] rounded-lg p-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-[var(--coffee)] font-medium">Coffee Origins Explored</span>
+                  <span className="text-[var(--espresso)] font-semibold">0 / {TOTAL_COFFEE_COUNTRIES}</span>
+                </div>
+                <div className="h-3 bg-[#E8E3DE] rounded-full overflow-hidden">
+                  <div className="h-full w-0 bg-gradient-to-r from-[var(--sage)] to-[#7A9B6D] rounded-full" />
+                </div>
+                <p className="text-xs text-[#A8A39E] mt-2 text-center">
+                  0% of coffee origins explored
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Sign In Button */}
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            onClick={() => setShowLoginModal(true)}
+            className="w-full py-3.5 px-4 bg-[var(--espresso)] text-white rounded-xl font-semibold hover:bg-[#2A1A0D] transition shadow-md"
+          >
+            Sign In to Track Your Journey
+          </motion.button>
         </main>
+
+        {/* Login Modal */}
+        <LoginPromptModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          title="Sign in to Your Profile"
+          message="Track your coffee journey, earn badges, and explore origins from around the world!"
+        />
+
         <Navbar />
       </div>
     )

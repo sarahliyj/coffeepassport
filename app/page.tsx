@@ -122,30 +122,35 @@ function CalendarIcon({ size = 20, color = 'currentColor' }: { size?: number; co
 
 function HomeContent() {
   const [coffeeEntries, setCoffeeEntries] = useState<CoffeeEntry[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [highlightCountry, setHighlightCountry] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const searchParams = useSearchParams()
   const supabase = createClient()
 
   const fetchEntries = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setIsAuthenticated(!!user)
-    if (!user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+      if (!user) {
+        setCoffeeEntries([])
+        return
+      }
+
+      setLoading(true)
+      const { data } = await supabase
+        .from('coffee_entries')
+        .select('id, origin_country, roast_level, brew_method, note, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      setCoffeeEntries(data || [])
+    } catch (error) {
+      console.error('Error fetching entries:', error)
+      setCoffeeEntries([])
+    } finally {
       setLoading(false)
-      return
     }
-
-    const { data } = await supabase
-      .from('coffee_entries')
-      .select('id, origin_country, roast_level, brew_method, note, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (data) {
-      setCoffeeEntries(data)
-    }
-    setLoading(false)
   }
 
   // Fetch on mount and when window gains focus

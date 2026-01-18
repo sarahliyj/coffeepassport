@@ -1,15 +1,18 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { countries, roastLevels, brewMethods } from '@/lib/countries'
+import { createClient } from '@/lib/supabase/client'
 
 interface CoffeeFormProps {
   onSuccess?: (country: string) => void
+  onLoginRequired?: () => void
 }
 
-export default function CoffeeForm({ onSuccess }: CoffeeFormProps) {
+export default function CoffeeForm({ onSuccess, onLoginRequired }: CoffeeFormProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [originCountry, setOriginCountry] = useState('')
   const [roastLevel, setRoastLevel] = useState('')
   const [brewMethod, setBrewMethod] = useState('')
@@ -23,6 +26,19 @@ export default function CoffeeForm({ onSuccess }: CoffeeFormProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setIsAuthenticated(!!user)
+      } catch {
+        setIsAuthenticated(false)
+      }
+    }
+    checkAuth()
+  }, [])
 
   const filteredCountries = countries.filter(country =>
     country.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -94,6 +110,17 @@ export default function CoffeeForm({ onSuccess }: CoffeeFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      if (onLoginRequired) {
+        onLoginRequired()
+      } else {
+        setError('Please sign in to add coffee')
+      }
+      return
+    }
+
     if (!originCountry) {
       setError('Please select a country')
       return
