@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { origin_country, roast_level, brew_method, note, photo_url } = body
+    const { origin_country, roast_level, brew_method, note } = body
 
     if (!origin_country) {
       return NextResponse.json(
@@ -57,7 +57,6 @@ export async function POST(request: Request) {
         roast_level: roast_level || null,
         brew_method: brew_method || null,
         note: note || null,
-        photo_url: photo_url || null,
       })
       .select()
       .single()

@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS coffee_entries (
   roast_level TEXT,
   brew_method TEXT,
   note TEXT,
-  photo_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -107,107 +106,6 @@ CREATE POLICY "Users can update own coffee entries"
 CREATE POLICY "Users can delete own coffee entries"
   ON coffee_entries FOR DELETE
   USING (auth.uid() = user_id);
-
--- ============================================
--- 6. STORAGE BUCKETS
--- ============================================
-
--- Create coffee-photos bucket
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'coffee-photos',
-  'coffee-photos',
-  true,
-  5242880, -- 5MB limit
-  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic']
-)
-ON CONFLICT (id) DO UPDATE SET
-  public = true,
-  file_size_limit = 5242880,
-  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-
--- Create avatars bucket for profile pictures
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'avatars',
-  'avatars',
-  true,
-  5242880, -- 5MB limit
-  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic']
-)
-ON CONFLICT (id) DO UPDATE SET
-  public = true,
-  file_size_limit = 5242880,
-  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-
--- ============================================
--- 7. STORAGE POLICIES FOR COFFEE-PHOTOS
--- ============================================
-
--- Drop existing policies
-DROP POLICY IF EXISTS "Users can upload coffee photos" ON storage.objects;
-DROP POLICY IF EXISTS "Users can view own coffee photos" ON storage.objects;
-DROP POLICY IF EXISTS "Public can view coffee photos" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete own coffee photos" ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can view coffee photos" ON storage.objects;
-
--- Allow authenticated users to upload to coffee-photos
-CREATE POLICY "Authenticated users can upload coffee photos"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'coffee-photos');
-
--- Allow anyone to view coffee photos (public bucket)
-CREATE POLICY "Anyone can view coffee photos"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'coffee-photos');
-
--- Allow users to update their own photos
-CREATE POLICY "Users can update own coffee photos"
-ON storage.objects FOR UPDATE
-TO authenticated
-USING (bucket_id = 'coffee-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
-
--- Allow users to delete their own photos
-CREATE POLICY "Users can delete own coffee photos"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'coffee-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
-
--- ============================================
--- 8. STORAGE POLICIES FOR AVATARS
--- ============================================
-
--- Drop existing policies
-DROP POLICY IF EXISTS "Users can upload avatars" ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can view avatars" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update own avatar" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete own avatar" ON storage.objects;
-
--- Allow authenticated users to upload avatars
-CREATE POLICY "Authenticated users can upload avatars"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'avatars');
-
--- Allow anyone to view avatars (public bucket)
-CREATE POLICY "Anyone can view avatars"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'avatars');
-
--- Allow users to update their own avatar
-CREATE POLICY "Users can update own avatar"
-ON storage.objects FOR UPDATE
-TO authenticated
-USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = 'profile-pictures');
-
--- Allow users to delete their own avatar
-CREATE POLICY "Users can delete own avatar"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = 'profile-pictures');
 
 -- ============================================
 -- DONE! Your database is now set up.
